@@ -1,0 +1,17 @@
+# Fleet Administration
+
+Fleet Management System Repo for BITS Pilani assignment
+
+## Workspace layout
+
+- `apps/frontend` — React administration interface.
+- `apps/gateway` — public Express API Gateway.
+- `apps/user-service` — authentication, users, and roles.
+- `apps/vehicle-service` — vehicle records and operational status.
+- `apps/telemetry-service` — telemetry and critical vehicle events.
+- `apps/geolocation-service` — geocoding, stored locations, and nearby searches.
+- `apps/notification-service` — SMS delivery and notification records.
+- `packages/shared` — framework-agnostic shared utilities and contracts.
+- `docs` — architecture, API, testing, and demonstration documentation.
+- `test` — cross-service and end-to-end test support.
+- `scripts` — repository-level operational scripts.

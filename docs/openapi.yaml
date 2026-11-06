@@ -1,0 +1,7 @@
+openapi: 3.0.3
+info:
+  title: Fleet Administration API
+  version: 1.0.0
+  description: API contracts will be added as the Fleet Management services are implemented.
+paths: {}
+

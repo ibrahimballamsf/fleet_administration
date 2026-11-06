@@ -1,11 +1,26 @@
 {
-  "name": "fleet_administration",
+  "name": "fleet-administration",
   "version": "1.0.0",
-  "description": "Fleet Administration BITS Pilani Assignment",
-  "main": "index.js",
+  "private": true,
+  "description": "Fleet Administration BITS Pilani assignment",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:unit": "npm run test:unit --workspaces --if-present",
+    "test:integration": "npm run test:integration --workspaces --if-present",
+    "test:e2e": "npm run test:e2e --workspaces --if-present",
+    "docs:validate": "npm run docs:validate --workspace=@fleet/gateway --if-present",
+    "seed": "npm run seed --workspace=@fleet/vehicle-service --if-present"
   },
-  "author": "",
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
+  },
   "license": "ISC"
 }
