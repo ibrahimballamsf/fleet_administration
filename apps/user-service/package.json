@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
-    "@fleet/shared": "*"
+    "@fleet/shared": "*",
+    "mongoose": "^9.12.0"
   }
 }
