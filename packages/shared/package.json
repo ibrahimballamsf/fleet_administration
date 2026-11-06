@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.js",
-    "./config": "./src/config/index.js"
+    "./config": "./src/config/index.js",
+    "./http": "./src/http/index.js"
   },
   "scripts": {
     "test": "node --test"
