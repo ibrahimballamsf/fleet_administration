@@ -11,6 +11,8 @@ const schema = z.object({
   USER_DB_NAME: z.string().trim().min(1).default("fleet_users"),
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN: z.string().trim().min(1).default("1h"),
+  JWT_ISSUER: z.string().trim().min(1).default("fleet-user-service"),
+  JWT_AUDIENCE: z.string().trim().min(1).default("fleet-api"),
   BCRYPT_ROUNDS: positiveIntegerSchema.min(10).max(15).default(12)
 });
 
@@ -26,7 +28,9 @@ export const config = Object.freeze({
   },
   jwt: {
     secret: environment.JWT_SECRET,
-    expiresIn: environment.JWT_EXPIRES_IN
+    expiresIn: environment.JWT_EXPIRES_IN,
+    issuer: environment.JWT_ISSUER,
+    audience: environment.JWT_AUDIENCE
   },
   bcryptRounds: environment.BCRYPT_ROUNDS
 });

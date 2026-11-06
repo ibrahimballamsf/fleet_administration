@@ -19,6 +19,7 @@ test("normalizes user email and applies safe defaults", async () => {
   assert.equal(user.email, "admin@example.com");
   assert.equal(user.role, "viewer");
   assert.equal(user.notificationPreferences.criticalEvents, true);
+  assert.equal(user.toJSON().passwordHash, undefined);
 });
 
 test("rejects unsupported roles and invalid phone numbers", async () => {

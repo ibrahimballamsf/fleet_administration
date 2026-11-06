@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import { z } from "zod";
 import {
   commaSeparatedSchema,
+  findEnvironmentFile,
   loadConfiguration,
   portSchema,
   urlSchema
@@ -12,6 +16,16 @@ const testSchema = z.object({
   PORT: portSchema,
   TARGET_URL: urlSchema,
   API_KEYS: commaSeparatedSchema
+});
+
+test("finds a repository environment file from a nested workspace", (context) => {
+  const root = mkdtempSync(join(tmpdir(), "fleet-config-"));
+  context.after(() => rmSync(root, { recursive: true, force: true }));
+  const nestedWorkspace = join(root, "apps", "user-service");
+  mkdirSync(nestedWorkspace, { recursive: true });
+  writeFileSync(join(root, ".env"), "NODE_ENV=test\n");
+
+  assert.equal(findEnvironmentFile(nestedWorkspace), join(root, ".env"));
 });
 
 test("loads and normalizes valid configuration", () => {

@@ -1,6 +1,6 @@
 # Configuration
 
-Copy `.env.example` to `.env` for local development. Never commit `.env` or real credentials.
+Copy `.env.example` to `.env` at the repository root for local development. Workspace commands search the current directory and its parents for this file. Never commit `.env` or real credentials.
 
 Every backend application loads `.env` and validates its own variables at startup. Invalid configuration stops startup with variable names and validation messages; configured values are not included in errors.
 
@@ -18,7 +18,7 @@ The gateway requires `API_KEYS` and all five downstream service URLs. Multiple A
 
 ## Authentication
 
-`JWT_SECRET` must contain at least 32 characters. Use a randomly generated secret outside local demonstrations. `BCRYPT_ROUNDS` must be between 10 and 15.
+`JWT_SECRET` must contain at least 32 characters. Use a randomly generated secret outside local demonstrations. `JWT_ISSUER` and `JWT_AUDIENCE` bind tokens to this application, and all services that verify the token must use the same values. `BCRYPT_ROUNDS` must be between 10 and 15.
 
 ## Geocoding
 

@@ -1,4 +1,6 @@
 import dotenv from "dotenv";
+import { existsSync } from "node:fs";
+import { dirname, join, parse } from "node:path";
 import { z } from "zod";
 
 export { z };
@@ -26,6 +28,19 @@ const baseSchema = z.object({
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info")
 });
 
+export function findEnvironmentFile(startDirectory = process.cwd()) {
+  let directory = startDirectory;
+
+  while (true) {
+    const candidate = join(directory, ".env");
+    if (existsSync(candidate)) return candidate;
+
+    const parent = dirname(directory);
+    if (parent === directory || directory === parse(directory).root) return undefined;
+    directory = parent;
+  }
+}
+
 function formatConfigurationError(serviceName, error) {
   const issues = error.issues.map((issue) => {
     const variable = issue.path.join(".") || "environment";
@@ -50,7 +65,8 @@ export function loadConfiguration({
   }
 
   if (loadDotenv) {
-    dotenv.config({ path: dotenvPath, quiet: true });
+    const environmentFile = dotenvPath ?? findEnvironmentFile();
+    dotenv.config({ ...(environmentFile ? { path: environmentFile } : {}), quiet: true });
   }
 
   const result = baseSchema.and(schema).safeParse(environment);

@@ -19,3 +19,11 @@ Fleet Management System Repo for BITS Pilani assignment
 Configuration variables and validation rules are documented in [`docs/configuration.md`](docs/configuration.md). Copy `.env.example` to `.env` to run the application locally.
 
 All backend services follow the response, error, status-code, and request-ID contract in [`docs/http-conventions.md`](docs/http-conventions.md).
+
+## Local User Service
+
+1. Ensure the repository-root `.env` contains local values based on `.env.example`.
+2. Start MongoDB with `npm run db:up`.
+3. Start the service with `npm run dev --workspace=@fleet/user-service`.
+
+MongoDB data is retained in the `fleet_mongodb_data` Docker volume. `npm run db:down` stops the local container without deleting that volume.
