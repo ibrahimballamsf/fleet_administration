@@ -4,6 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./config": "./src/config/index.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "zod": "^4.6.7"
   }
 }

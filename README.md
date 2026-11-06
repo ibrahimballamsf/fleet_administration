@@ -15,3 +15,5 @@ Fleet Management System Repo for BITS Pilani assignment
 - `docs` — architecture, API, testing, and demonstration documentation.
 - `test` — cross-service and end-to-end test support.
 - `scripts` — repository-level operational scripts.
+
+Configuration variables and validation rules are documented in [`docs/configuration.md`](docs/configuration.md). Copy `.env.example` to `.env` to run the application locally.

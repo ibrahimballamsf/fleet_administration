@@ -2,5 +2,8 @@
   "name": "@fleet/notification-service",
   "version": "1.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@fleet/shared": "*"
+  }
 }
