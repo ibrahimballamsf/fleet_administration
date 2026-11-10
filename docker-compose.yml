@@ -1,0 +1,199 @@
+name: fleet-administration
+
+x-app: &app
+  image: fleet-administration:local
+  restart: unless-stopped
+
+x-database-environment: &database-environment
+  MONGODB_URI: mongodb://mongodb:27017
+  USER_DB_NAME: fleet_users
+  VEHICLE_DB_NAME: fleet_vehicles
+  TELEMETRY_DB_NAME: fleet_telemetry
+  GEOLOCATION_DB_NAME: fleet_geolocation
+  NOTIFICATION_DB_NAME: fleet_notifications
+
+x-auth-environment: &auth-environment
+  JWT_SECRET: local-docker-jwt-secret-change-before-production
+  JWT_ISSUER: fleet-user-service
+  JWT_AUDIENCE: fleet-api
+
+x-service-healthcheck: &service-healthcheck
+  interval: 5s
+  timeout: 3s
+  retries: 15
+  start_period: 10s
+
+services:
+  mongodb:
+    image: mongo:8.0
+    restart: unless-stopped
+    environment:
+      # MongoDB's bundled TCMalloc is incompatible with Linux kernels 6.19+
+      # unless glibc owns rseq. Remove after SERVER-121912 is resolved upstream.
+      GLIBC_TUNABLES: glibc.pthread.rseq=1
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - fleet_mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+
+  seed:
+    <<: *app
+    build:
+      context: .
+    restart: "no"
+    command: ["npm", "run", "seed:demo"]
+    environment:
+      <<: *database-environment
+      NODE_ENV: development
+      BCRYPT_ROUNDS: 10
+      DEMO_PASSWORD: "${DEMO_PASSWORD:-FleetDemo123!}"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  user-service:
+    <<: *app
+    command: ["npm", "run", "start", "--workspace=@fleet/user-service"]
+    environment:
+      <<: [*database-environment, *auth-environment]
+      NODE_ENV: production
+      USER_SERVICE_PORT: 4001
+      JWT_EXPIRES_IN: 1h
+      BCRYPT_ROUNDS: 10
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4001/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+
+  geolocation-service:
+    <<: *app
+    command: ["npm", "run", "start", "--workspace=@fleet/geolocation-service"]
+    environment:
+      <<: [*database-environment, *auth-environment]
+      NODE_ENV: production
+      GEOLOCATION_SERVICE_PORT: 4004
+      GEOCODER_PROVIDER: mock
+      NOMINATIM_BASE_URL: https://nominatim.openstreetmap.org
+      NOMINATIM_USER_AGENT: fleet-administration-local/1.0
+      GEOCODER_TIMEOUT_MS: 5000
+      GEOCODE_CACHE_TTL_SECONDS: 86400
+      MAX_NEARBY_RADIUS_KM: 100
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4004/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+
+  notification-service:
+    <<: *app
+    command: ["npm", "run", "start", "--workspace=@fleet/notification-service"]
+    environment:
+      <<: [*database-environment, *auth-environment]
+      NODE_ENV: production
+      NOTIFICATION_SERVICE_PORT: 4005
+      FLEET_ADMIN_PHONE_NUMBERS: "+32470000000"
+      SMS_PROVIDER: stub
+      SMS_STUB_MODE: success
+      SMS_TIMEOUT_MS: 5000
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4005/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+
+  vehicle-service:
+    <<: *app
+    command: ["npm", "run", "start", "--workspace=@fleet/vehicle-service"]
+    environment:
+      <<: [*database-environment, *auth-environment]
+      NODE_ENV: production
+      VEHICLE_SERVICE_PORT: 4002
+      GEOLOCATION_SERVICE_URL: http://geolocation-service:4004
+      NOTIFICATION_SERVICE_URL: http://notification-service:4005
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+      notification-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4002/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+
+  telemetry-service:
+    <<: *app
+    command: ["npm", "run", "start", "--workspace=@fleet/telemetry-service"]
+    environment:
+      <<: [*database-environment, *auth-environment]
+      NODE_ENV: production
+      TELEMETRY_SERVICE_PORT: 4003
+      VEHICLE_SERVICE_URL: http://vehicle-service:4002
+      GEOLOCATION_SERVICE_URL: http://geolocation-service:4004
+      NOTIFICATION_SERVICE_URL: http://notification-service:4005
+    depends_on:
+      vehicle-service:
+        condition: service_healthy
+      geolocation-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4003/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+
+  gateway:
+    <<: *app
+    command: ["npm", "run", "start", "--workspace=@fleet/gateway"]
+    environment:
+      NODE_ENV: production
+      GATEWAY_PORT: 4000
+      API_KEYS: development-api-key
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX_REQUESTS: 100
+      PROXY_TIMEOUT_MS: 5000
+      USER_SERVICE_URL: http://user-service:4001
+      VEHICLE_SERVICE_URL: http://vehicle-service:4002
+      TELEMETRY_SERVICE_URL: http://telemetry-service:4003
+      GEOLOCATION_SERVICE_URL: http://geolocation-service:4004
+      NOTIFICATION_SERVICE_URL: http://notification-service:4005
+    ports:
+      - "4000:4000"
+    depends_on:
+      user-service:
+        condition: service_healthy
+      vehicle-service:
+        condition: service_healthy
+      telemetry-service:
+        condition: service_healthy
+      geolocation-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+
+  frontend:
+    <<: *app
+    command: ["npm", "run", "preview", "--workspace=@fleet/frontend", "--", "--host", "0.0.0.0", "--port", "3000"]
+    ports:
+      - "3000:3000"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    healthcheck:
+      <<: *service-healthcheck
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+
+volumes:
+  fleet_mongodb_data:

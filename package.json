@@ -1,0 +1,45 @@
+{
+  "name": "fleet-administration",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fleet Administration BITS Pilani assignment by Ibrahim Balla (2023EBCS153)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "db:up": "docker compose up -d mongodb",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f mongodb",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:ps": "docker compose ps",
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && npm run test:service-integration",
+    "test:unit": "npm run test:unit --workspaces --if-present",
+    "test:frontend": "npm run test:frontend --workspace=@fleet/frontend",
+    "test:integration": "npm run test:integration --workspaces --if-present && npm run test:service-integration",
+    "test:service-integration": "mocha \"test/service-integration/**/*.spec.mjs\"",
+    "test:e2e": "playwright test",
+    "docs:validate": "npm run docs:validate --workspace=@fleet/gateway --if-present",
+    "docs:links": "node scripts/validate-docs.mjs",
+    "demo:capture": "node scripts/capture-demo-screenshots.mjs",
+    "ci:validate": "npm run docs:validate && npm run docs:links && npm run build && node --check scripts/seed-demo.mjs",
+    "ci:smoke": "node scripts/smoke-test.mjs",
+    "seed": "npm run seed:demo",
+    "seed:demo": "node scripts/seed-demo.mjs"
+  },
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "chai": "^6.3.0",
+    "mocha": "^12.0.3"
+  }
+}

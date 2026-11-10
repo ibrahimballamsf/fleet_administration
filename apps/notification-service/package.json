@@ -1,0 +1,22 @@
+{
+  "name": "@fleet/notification-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "test": "npm run test:integration && npm run test:unit",
+    "test:integration": "node --test test/*.test.js",
+    "test:unit": "mocha \"test/unit/**/*.spec.js\""
+  },
+  "dependencies": {
+    "@fleet/shared": "*",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.12.0"
+  },
+  "devDependencies": {
+    "supertest": "^7.3.2"
+  }
+}
